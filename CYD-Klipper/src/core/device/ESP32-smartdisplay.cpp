@@ -50,8 +50,36 @@ void lv_screen_intercept(_lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_col
     #endif
 #endif
 
+#ifdef PANDA_TOUCH
+// The Panda Touch panel has a reset line the RGB driver doesn't know about,
+// and the GT911 picks its I2C address from the INT level while it leaves reset.
+// Hold INT high through the reset so it comes up on 0x5D, the address the driver uses.
+static void panda_touch_pre_init()
+{
+    pinMode(PANDA_TOUCH_LCD_RST_GPIO, OUTPUT);
+    digitalWrite(PANDA_TOUCH_LCD_RST_GPIO, LOW);
+    delay(100);
+    digitalWrite(PANDA_TOUCH_LCD_RST_GPIO, HIGH);
+    delay(10);
+
+    pinMode(PANDA_TOUCH_GT911_INT_GPIO, OUTPUT);
+    pinMode(PANDA_TOUCH_GT911_RST_GPIO, OUTPUT);
+    digitalWrite(PANDA_TOUCH_GT911_INT_GPIO, HIGH);
+    digitalWrite(PANDA_TOUCH_GT911_RST_GPIO, LOW);
+    delay(10);
+    digitalWrite(PANDA_TOUCH_GT911_RST_GPIO, HIGH);
+    delay(120);
+    pinMode(PANDA_TOUCH_GT911_INT_GPIO, INPUT_PULLUP);
+    delay(10);
+}
+#endif // PANDA_TOUCH
+
 void screen_setup()
 {
+#ifdef PANDA_TOUCH
+    panda_touch_pre_init();
+#endif // PANDA_TOUCH
+
     smartdisplay_init();
 
 #ifndef CYD_SCREEN_DISABLE_INVERT_COLORS
