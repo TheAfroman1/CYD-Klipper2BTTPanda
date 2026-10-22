@@ -36,7 +36,11 @@ def extract_commit() -> str:
     git_describe_output = subprocess.run(["git", "describe", "--tags"], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
     return git_describe_output.split("-")[0]
 
-repo_version = extract_commit()
+try:
+    repo_version = extract_commit()
+except:
+    # Forks carry no tags, so git describe fails there
+    repo_version = "Unknown"
 configurations = []
 site_sections : dict[str, dict] = {"CYD": []}
 
